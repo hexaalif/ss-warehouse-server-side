@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors')
+// const jwt = require('jwtwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
@@ -17,6 +18,15 @@ async function run(){
         await client.connect();
         const updateItemCollection = client.db('ss-warehouse').collection('updateProducts')
         
+        // auth
+        app.post('/login', async(req, res) =>{
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '1d'
+            })
+            res.send({accessToken})
+        })
+
         // add inventory
         app.get('/update/:updateId', async(req, res) =>{
             const id = req.params.updateId;
@@ -31,6 +41,13 @@ async function run(){
             res.send(update)
         })
         
+        // add item to inventory
+        app.post("/additem", async (req, res) => {
+        const newItem = req.body;
+        const result = await updateItemCollection.insertOne(newItem);
+        res.send(result);
+      });   
+
         // update item detail
         app.put("/update/:id", async (req, res) => {
             const id = req.params.id;
